@@ -1,7 +1,5 @@
 import os
 from dotenv import load_dotenv
-import os
-from dotenv import load_dotenv
 
 class Actor:
     def __init__(self, name):
@@ -39,7 +37,7 @@ class Actor:
         self.url_list.append(url)
     
     def set_crawl_run_input(self):
-        if not self.url_list:  # Ensure there's at least one URL
+        if not self.url_list:
             raise ValueError("URL list is empty. Please add at least one URL before setting crawl run input.")
         self.crawl_run_input = {
             "startUrls": [{"url": url} for url in self.url_list],
@@ -53,21 +51,21 @@ class Actor:
             "initialConcurrency": 0,
             "maxConcurrency": 200,
             "initialCookies": [],
-            "proxyConfiguration": { "useApifyProxy": True },
+            "proxyConfiguration": {"useApifyProxy": True},
             "maxSessionRotations": 10,
             "maxRequestRetries": 3,
             "requestTimeoutSecs": 60,
             "dynamicContentWaitSecs": 10,
             "maxScrollHeightPixels": 5000,
             "removeElementsCssSelector": """nav, footer, script, style, noscript, svg,
-        [role=\"alert\"],
-        [role=\"banner\"],
-        [role=\"dialog\"],
-        [role=\"alertdialog\"],
-        [role=\"region\"][aria-label*=\"skip\" i],
-        [aria-modal=\"true\"]""",
+        [role="alert"],
+        [role="banner"],
+        [role="dialog"],
+        [role="alertdialog"],
+        [role="region"][aria-label*="skip" i],
+        [aria-modal="true"]""",
             "removeCookieWarnings": True,
-            "clickElementsCssSelector": "[aria-expanded=\"false\"]",
+            "clickElementsCssSelector": '[aria-expanded="false"]',
             "htmlTransformer": "readableText",
             "readableTextCharThreshold": 100,
             "aggressivePrune": False,
@@ -87,6 +85,5 @@ class Actor:
 
 if __name__ == '__main__':
     x = Actor("jeff")
-    # Assuming you wanted to call set_serp_run_input instead of set_run_input
     x.set_serp_run_input("What's the weather today in sf?")
     print(x.get_serp_run_input())
