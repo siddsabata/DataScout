@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
-
+import os
+from dotenv import load_dotenv
 
 class Actor:
     def __init__(self, name):
@@ -11,8 +12,7 @@ class Actor:
     
     def get_api_token(self):
         load_dotenv()
-        token = os.getenv('APIFY_API_TOKEN')
-        return False
+        return os.getenv('APIFY_API_TOKEN')
     
     def set_serp_run_input(self, user_query):
         self.serp_run_input = {
@@ -31,12 +31,18 @@ class Actor:
             };
             };""",
         }
+        
     def get_serp_run_input(self):
         return self.serp_run_input
     
+    def add_url_to_list(self, url):
+        self.url_list.append(url)
+    
     def set_crawl_run_input(self):
+        if not self.url_list:  # Ensure there's at least one URL
+            raise ValueError("URL list is empty. Please add at least one URL before setting crawl run input.")
         self.crawl_run_input = {
-            "startUrls": [{ "url": self.url_list[0]}],
+            "startUrls": [{"url": url} for url in self.url_list],
             "useSitemaps": False,
             "crawlerType": "playwright:firefox",
             "includeUrlGlobs": [],
@@ -75,13 +81,12 @@ class Actor:
             "clientSideMinChangePercentage": 15,
             "renderingTypeDetectionPercentage": 10,
         }
+        
     def get_crawl_run_input(self):
         return self.crawl_run_input
-    
 
 if __name__ == '__main__':
     x = Actor("jeff")
-    x.set_run_input("What's the weather today in sf?")
-    print(x.get_run_input())
-
-        
+    # Assuming you wanted to call set_serp_run_input instead of set_run_input
+    x.set_serp_run_input("What's the weather today in sf?")
+    print(x.get_serp_run_input())
