@@ -2,3 +2,5 @@
 venv/
 .venv
 .venv/
+actor_functions.py
+serp_contentcrawler copy.ipynb
