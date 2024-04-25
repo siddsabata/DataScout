@@ -2,6 +2,10 @@ import os
 from dotenv import load_dotenv
 from apify_client import ApifyClient
 from serpapi import GoogleSearch
+from langchain_community.document_loaders import ApifyDatasetLoader
+from langchain_community.document_loaders.base import Document
+from langchain.indexes import VectorstoreIndexCreator
+from langchain_openai import OpenAIEmbeddings
 import streamlit as st
 
 class Actor:
@@ -23,32 +27,25 @@ class Actor:
         "google_domain": "google.com",
         "gl": "us",
         "hl": "en",
-        "num": "10",
+        "num": "3",
         "filter": "0",
         "start": "0"
         }
         search = GoogleSearch(params)
         results = search.get_dict()
         return results["organic_results"]
-        #for result in organic_results:
-        #    print(f"Title: {result['title']}")
-        #    self.url_list.append(result['link'])
-        #    print(f"Link: {result['link']}")
-        #    print()
-        #return self.url_list
     
-    def set_crawl_run_input(self):
-        if not self.url_list:
-            raise ValueError("URL list is empty. Please add at least one URL before setting crawl run input.")
+    #set crawl input with url list
+    def crawler_input(self):
         self.crawl_run_input = {
-            "startUrls": [{"url": url} for url in self.url_list],
+            "startUrls": [],
             "useSitemaps": False,
             "crawlerType": "playwright:firefox",
             "includeUrlGlobs": [],
             "excludeUrlGlobs": [],
             "ignoreCanonicalUrl": False,
-            "maxCrawlDepth": 2,
-            "maxCrawlPages": 5,
+            "maxCrawlDepth": 3,
+            "maxCrawlPages": 3,
             "initialConcurrency": 0,
             "maxConcurrency": 200,
             "initialCookies": [],
@@ -80,11 +77,21 @@ class Actor:
             "clientSideMinChangePercentage": 15,
             "renderingTypeDetectionPercentage": 10,
         }
+        for url in self.url_list:
+            self.crawl_run_input["startUrls"].append({"url": url})
+    
+    def run_crawl_loader(self):
+        data = self.run_crawl()
+        loader = ApifyDatasetLoader(
+        dataset_id= data["defaultDatasetId"],
+        dataset_mapping_function=lambda dataset_item: Document(
+            page_content=dataset_item["text"], metadata={"source": dataset_item["url"]}
+        )
+        )
         
-    def get_crawl_run_input(self):
-        return self.crawl_run_input
 
 def main():
+    crawler = Actor()
     # Web app title
     st.title('DataScout')
 
@@ -93,12 +100,34 @@ def main():
 
     # Button to initiate search
     if st.button('Search'):
-        x = Actor()
-        results = x.google_search(user_input)
+        results = crawler.google_search(user_input)
         for result in results:
+            #crawler.url_list.append(result['link'])
             st.subheader(result['title'])
             st.write(result['link'])
 
 # run the app
 if __name__ == "__main__":
-    main()
+    #main()
+    x = Actor()
+    results = x.google_search(input("Enter Topic: "))
+    for result in results:
+        x.url_list.append(result['link'])
+    #print(x.url_list)
+    #sets crawler input with links given
+    x.crawler_input()
+    client = ApifyClient(x.apify_api_token)
+    data = client.actor("aYG0l9s7dbB7j3gbS").call(run_input=x.crawl_run_input)
+    loader = ApifyDatasetLoader(
+        dataset_id= data["defaultDatasetId"],
+        dataset_mapping_function=lambda dataset_item: Document(
+            page_content=dataset_item["text"], metadata={"source": dataset_item["url"]}
+        )
+    )
+    index = VectorstoreIndexCreator().from_loaders([loader])
+    query = input("Enter a question about the topic: ")
+    result = index.query_with_sources(query)
+    print(result["answer"])
+    print(result["sources"])
+    
+
