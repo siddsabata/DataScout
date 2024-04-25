@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from apify_client import ApifyClient
 
 class Actor:
     def __init__(self, name):
@@ -7,16 +8,16 @@ class Actor:
         self.serp_run_input = {}
         self.crawl_run_input = {}
         self.url_list = []
-    
-    def get_api_token(self):
         load_dotenv()
-        return os.getenv('APIFY_API_TOKEN')
+        self.apify_api_token = os.getenv('APIFY_API_TOKEN')
+        self.client = ApifyClient(self.APIFY_API_KEY)
+        
     
     def set_serp_run_input(self, user_query):
         self.serp_run_input = {
             "queries": user_query,
             "maxPagesPerQuery": 1,
-            "resultsPerPage": 5,
+            "resultsPerPage": 3,
             "mobileResults": False,
             "languageCode": "",
             "maxConcurrency": 10,
@@ -46,8 +47,8 @@ class Actor:
             "includeUrlGlobs": [],
             "excludeUrlGlobs": [],
             "ignoreCanonicalUrl": False,
-            "maxCrawlDepth": 20,
-            "maxCrawlPages": 10,
+            "maxCrawlDepth": 2,
+            "maxCrawlPages": 5,
             "initialConcurrency": 0,
             "maxConcurrency": 200,
             "initialCookies": [],
