@@ -1,41 +1,41 @@
 import os
 from dotenv import load_dotenv
 from apify_client import ApifyClient
+from serpapi import GoogleSearch
+import streamlit as st
 
 class Actor:
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
         self.serp_run_input = {}
         self.crawl_run_input = {}
         self.url_list = []
         load_dotenv()
         self.apify_api_token = os.getenv('APIFY_API_TOKEN')
-        self.client = ApifyClient(self.APIFY_API_KEY)
+        self.client = ApifyClient(self.apify_api_token)
+        self.serp_api_token = os.getenv('SERP_API_TOKEN')
         
-    
-    def set_serp_run_input(self, user_query):
-        self.serp_run_input = {
-            "queries": user_query,
-            "maxPagesPerQuery": 1,
-            "resultsPerPage": 3,
-            "mobileResults": False,
-            "languageCode": "",
-            "maxConcurrency": 10,
-            "saveHtml": False,
-            "saveHtmlToKeyValueStore": False,
-            "includeUnfilteredResults": False,
-            "customDataFunction": """async ({ input, $, request, response, html }) => {
-            return {
-            pageTitle: $('title').text(),
-            };
-            };""",
+    def google_search(self, question):
+        params = {
+        "api_key": self.serp_api_token,
+        "engine": "google",
+        "q": question,
+        "location": "United States",
+        "google_domain": "google.com",
+        "gl": "us",
+        "hl": "en",
+        "num": "10",
+        "filter": "0",
+        "start": "0"
         }
-        
-    def get_serp_run_input(self):
-        return self.serp_run_input
-    
-    def add_url_to_list(self, url):
-        self.url_list.append(url)
+        search = GoogleSearch(params)
+        results = search.get_dict()
+        return results["organic_results"]
+        #for result in organic_results:
+        #    print(f"Title: {result['title']}")
+        #    self.url_list.append(result['link'])
+        #    print(f"Link: {result['link']}")
+        #    print()
+        #return self.url_list
     
     def set_crawl_run_input(self):
         if not self.url_list:
@@ -84,7 +84,21 @@ class Actor:
     def get_crawl_run_input(self):
         return self.crawl_run_input
 
-if __name__ == '__main__':
-    x = Actor("jeff")
-    x.set_serp_run_input("What's the weather today in sf?")
-    print(x.get_serp_run_input())
+def main():
+    # Web app title
+    st.title('DataScout')
+
+    # Input search query
+    user_input = st.text_input("Enter your search query", value="", max_chars=50)
+
+    # Button to initiate search
+    if st.button('Search'):
+        x = Actor()
+        results = x.google_search(user_input)
+        for result in results:
+            st.subheader(result['title'])
+            st.write(result['link'])
+
+# run the app
+if __name__ == "__main__":
+    main()
